@@ -1,0 +1,184 @@
+<html>
+  <head>
+    <title>Hello ReactJS - Adding A Table Row - Code Example</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <script src="http://fb.me/react-0.11.1.js"></script>
+    <script src="http://fb.me/JSXTransformer-0.11.1.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>QBurst ReactJS - Single Page POS System</h1>
+      </div>
+      <div id="cartApp"></div>  
+    </div>
+    <script type="text/jsx">
+      /** @jsx React.DOM */
+      var CartApp = React.createClass({
+        getInitialState: function() {
+          return {itemlist:this.props.items};
+        },
+        handleNewRowSubmit: function( newItem ) {
+         console.log(newItem);
+         this.state.itemlist.push(newItem);
+         this.setState({});
+        },
+        handleItemRemove: function( Item ) {          
+          var index = -1;	
+          var clength = this.state.itemlist.length;
+      		for( var i = 0; i < clength; i++ ) {
+      			if( this.state.itemlist[i].itemId === Item.itemId ) {
+      				index = i;
+      				break;
+      			}
+      		}
+      		this.state.itemlist.splice( index, 1 );	
+      		this.setState( {itemlist: this.state.itemlist} );
+        },
+        render: function() {
+          var tableStyle = {width: '100%'};
+          var leftTdStyle = {width: '50%',padding:'20px',verticalAlign: 'top'};
+          var rightTdStyle = {width: '50%',padding:'20px',verticalAlign: 'top'};
+       if (this.state.itemlist.length>0){
+          return ( 
+            <table style={tableStyle}>
+              <tr>
+                <td style={leftTdStyle}>
+                  <Itemlist ilist={this.state.itemlist} onItemRemove={this.handleItemRemove}/>
+                </td>
+                <td style={rightTdStyle}>
+                  <NewRow onRowSubmit={this.handleNewRowSubmit}/>
+                </td>
+              </tr>
+          </table>
+          );
+      }
+      else{
+      	return ( <table style={tableStyle}>
+              <tr>
+                <td style={leftTdStyle}>
+                  <div> <h3>Get your items added soon!!</h3></div>
+                </td>
+                <td style={rightTdStyle}>
+                 <NewRow onRowSubmit={this.handleNewRowSubmit}/>
+                </td>
+              </tr>
+          </table>
+      	
+      	);
+      }
+        }
+      });
+      
+      var Itemlist = React.createClass({
+      	getInitialState: function() {
+    		return {billableTotal: 0};
+  		},
+        handleItemRemove: function(item){
+          this.props.onItemRemove( item );
+        },
+        getFinalBillAmount:function(prop){
+        	var billAmt= 0;
+        		prop.ilist.map(function(item) {        			
+        			billAmt= parseInt(billAmt) + parseInt(item.total);	
+        		});
+        		console.log(billAmt);
+        	return billAmt;
+        },
+        componentWillReceiveProps: function(nextProps) {
+        	console.log(nextProps);
+        	var finalAmt = this.getFinalBillAmount(nextProps);
+  			this.setState({billableTotal: finalAmt});
+		},
+        render: function() {
+          var items = null;
+          var that = this; // TODO: Needs to find out why that = this made it work; Was getting error that onItemDelete is not undefined
+         items = this.props.ilist.map(function(item) {
+           	return <Item item={item} onItemDelete={that.handleItemRemove} /> 
+          }); 
+
+          return ( 
+            <div>
+              <h3>List of items</h3>
+              <table className="table table-striped">
+                <thead><tr><th>Item</th><th>Quantity</th><th>SubTotal</th><th>Tax</th><th>Total</th></tr></thead>
+                <tbody>{items}</tbody>
+                <tfoot>
+                <h3> Total Billable Amount :{this.state.billableTotal}</h3>
+                </tfoot>
+              </table>
+            </div>
+            );
+        }
+      });
+      
+      var Item = React.createClass({
+        handleRemoveItem: function() {
+          this.props.onItemDelete( this.props.item );
+          return false;
+        },
+        render: function() {
+          return (
+            <tr>
+              <td>{this.props.item.itemId}</td>
+              <td>{this.props.item.quantity}</td>
+              <td>{this.props.item.subTotal}</td>
+              <td>{this.props.item.tax}</td>
+              <td>{this.props.item.total}</td>
+              <td><input type="button"  className="btn btn-primary" value="Remove Item" onClick={this.handleRemoveItem}/></td>
+            </tr>
+            );
+        }
+      });
+      
+      var NewRow = React.createClass({
+        handleSubmit: function(e) {
+        e.preventDefault();
+          var itemId = this.refs.itemId.getDOMNode().value;
+          var quantity = this.refs.quantity.getDOMNode().value;
+          var subTotal = this.refs.subTotal.getDOMNode().value;
+          var calcTax= (parseInt(this.refs.tax.getDOMNode().value))/ 100;
+          var tax = parseInt(subTotal) * calcTax;
+          var total = parseInt(subTotal) + tax;
+          var newrow = {itemId: itemId, quantity: quantity, subTotal: subTotal, tax: tax, total: total };
+          this.props.onRowSubmit(newrow);
+          
+          this.refs.itemId.getDOMNode().value = '';
+          this.refs.quantity.getDOMNode().value = '';
+          this.refs.subTotal.getDOMNode().value = '';
+          this.refs.tax.getDOMNode().value = '';
+          return false;
+        },
+        render: function() {
+          var inputStyle = {padding:'12px'}
+          return ( 
+            <div className="well">
+              <h3>Add an Item</h3>
+            <form onSubmit={this.handleSubmit}>
+              <div className="input-group input-group-lg" style={inputStyle}>
+                <input type="text"  className="form-control col-md-8"  placeholder="Item Id or Desc" ref="itemId"/>
+              </div>
+              <div className="input-group input-group-lg" style={inputStyle}>
+                <input type="number"  className="form-control col-md-8" placeholder="Quantity" ref="quantity"/>
+              </div>
+              <div className="input-group input-group-lg" style={inputStyle}>
+                <input type="number"  className="form-control col-md-8" placeholder="Sub Total" ref="subTotal"/>
+              </div>
+                <div className="input-group input-group-lg" style={inputStyle}>
+                <input type="number"  className="form-control col-md-8" placeholder="Tax in percentage" ref="tax"/>
+              </div>
+              <div className="input-group input-group-lg" style={inputStyle}>
+                <input type="submit"  className="btn btn-primary" value="Add Item to cart"/>
+              </div>
+            </form>
+            </div>
+            );
+        }
+      });
+
+       var Items = [];
+      React.renderComponent( <CartApp items={Items}/>, document.getElementById( "cartApp" ) );
+    </script>
+  </body>
+  </html>
